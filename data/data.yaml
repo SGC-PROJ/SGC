@@ -1,0 +1,23 @@
+train: ../custom_dataset/train/images
+val: ../custom_dataset/valid/images
+test: ../custom_dataset/test/images
+
+nc: 8
+names:
+  [
+    "Clothing",
+    "General trash",
+    "Glass",
+    "Paper pack",
+    "Paper",
+    "Plastic bag",
+    "Plastic",
+    "Styrofoam",
+  ]
+
+# roboflow:
+#   workspace: project-vqa1l
+#   project: asdf-igbbs
+#   version: 1
+#   license: CC BY 4.0
+#   url: https://universe.roboflow.com/project-vqa1l/asdf-igbbs/dataset/1
