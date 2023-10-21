@@ -1,0 +1,19 @@
+train: ../sgc_dataset/train/images
+val: ../sgc_dataset/valid/images
+test: ../sgc_dataset/test/images
+
+nc: 12 # 클래스 수
+names: [
+    "UNKNOWN",
+    "General Trash",
+    "Paper",
+    "Paper pack",
+    "Metal",
+    "Glass",
+    "Plastic",
+    "Styrofoam",
+    "Plastic bag",
+    "Bettery",
+    "Clothing",
+    "-1"
+  ] # 클래스 이름
