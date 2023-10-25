@@ -19,7 +19,7 @@
 #define IN8 22  //IN4
 
 //Analog Signal CONTROL(POWER)
-int c = 80;
+int c = 90;
 
 //Relay → with NC
 #define S1 42 //back
@@ -42,8 +42,7 @@ int d=1;                //head or rear sensor
 int state=0;            //cross line processing
 int L, R, C;            //read IR sensor
 int go = 0;             //start or stop
-
-
+int access = 1;
 
 void print(int d, int state, int L, int C, int R){
   char dir = (d==1)?'f':'b';
@@ -56,7 +55,8 @@ void print(int d, int state, int L, int C, int R){
   Serial.print(R);
   Serial.print(" / ");
   Serial.println(dir);
-  if (L == 1 && C == 1 && R == 1){
+  if (L == 1 && R == 1){
+    Serial.print(state);
     Serial.println("----------------------------");
   }
 }
@@ -82,10 +82,10 @@ void left(){
   analogWrite(ENA, c-15);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  analogWrite(ENB, c);
+  analogWrite(ENB, c+25);
   digitalWrite(IN5, HIGH);
   digitalWrite(IN6, LOW);
-  analogWrite(ENC, c+15);
+  analogWrite(ENC, c+30);
   digitalWrite(IN7, HIGH);
   digitalWrite(IN8, LOW);
   analogWrite(END, c+30);
@@ -94,16 +94,16 @@ void left(){
 void right(){
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
-  analogWrite(ENA, c+15);
+  analogWrite(ENA, c+30);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
   analogWrite(ENB, c+30);     
   digitalWrite(IN5, LOW);
   digitalWrite(IN6, HIGH);
-  analogWrite(ENC, c-15);        //c-20
+  analogWrite(ENC, c+25);        //c-20
   digitalWrite(IN7, LOW);
   digitalWrite(IN8, HIGH);
-  analogWrite(END, c);        //c-5
+  analogWrite(END, c-15);        //c-5
 }
 
 void back(){
@@ -158,28 +158,28 @@ void backRight(){
   analogWrite(ENA, c+30);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  analogWrite(ENB, c+15);
+  analogWrite(ENB, c+30);
   digitalWrite(IN5, HIGH);
   digitalWrite(IN6, LOW);
-  analogWrite(ENC, c-10);
+  analogWrite(ENC, c-15);
   digitalWrite(IN7, HIGH);
   digitalWrite(IN8, LOW);
-  analogWrite(END, c-25);
+  analogWrite(END, c-15);
 }
 
 void backLeft(){
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
-  analogWrite(ENA, c-10);
+  analogWrite(ENA, c-15);
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
-  analogWrite(ENB, c-25);     
+  analogWrite(ENB, c-15);     
   digitalWrite(IN5, LOW);
   digitalWrite(IN6, HIGH);
   analogWrite(ENC, c+30);        //c-20
   digitalWrite(IN7, LOW);
   digitalWrite(IN8, HIGH);
-  analogWrite(END, c+15);        //c-5
+  analogWrite(END, c+30);        //c-5
 }
 
 void stop(){
@@ -201,12 +201,17 @@ void stop(){
 }
   
 //cross line processing
-void crossLine(int n, int state){
+int crossLine(int go, int state){
   switch(state){
     case 1:
-      switch(n){
+      switch(go){
         case 1:
-          straight();
+          Serial.println("asdfasdf");
+          counterClockWise();
+          delay(600);
+          SL = 1;
+          SC = 1;
+          SR = 0;
           break;
         case 2:
           right();
@@ -219,9 +224,17 @@ void crossLine(int n, int state){
       }
     break;
     case 2:
-     switch(n){
+     switch(go){
         case 1:
-          left();
+          stop();
+          digitalWrite(S1, HIGH);
+          d=0;
+          delay(1000);
+          c += 20;
+          SL = 0;
+          SC = 1;
+          SR = 0;
+          back();
           break;
         case 2:
           stop();                   //시점 변경부분 실험하며 좀 더 자연스럽게 편집
@@ -241,13 +254,14 @@ void crossLine(int n, int state){
       }  
     break;
     case 3:
-      switch(n){
+      switch(go){
         case 1:
-          stop();
-          delay(500);
-          d=0;
-          delay(500);
           back();                   //시점 변경부분 실험하며 좀 더 자연스럽게 편집
+          SL = 0;
+          SC = 1;
+          SR = 0;
+          c-=10;
+          delay(100);
           break;
         case 2:
           back();
@@ -261,9 +275,23 @@ void crossLine(int n, int state){
       }
     break;
     case 4:
-      switch(n){
+      switch(go){
         case 1:
-          back();
+          clockWise();
+          //L, C, R = 0;
+          c += 15;
+          delay(1500);
+          if(d == 1){
+            L = digitalRead(HR);
+            C = digitalRead(HC);
+            R = digitalRead(HL);
+          }
+          else{
+            L = digitalRead(RR);
+            C = digitalRead(RC);
+            R = digitalRead(RL);
+          }
+          c -= 15;
           break;
         case 2:
           backRight();
@@ -277,9 +305,13 @@ void crossLine(int n, int state){
       }
     break;
     case 5:
-      switch(n){
+      switch(go){
         case 1:
-          backRight();                   //시점 변경부분 실험하며 좀 더 자연스럽게 편집
+          back();                   //시점 변경부분 실험하며 좀 더 자연스럽게 편집
+          SL = 0;
+          SC = 1;
+          SR = 0;
+          delay(100);
           break;
         case 2:
           straight();
@@ -293,9 +325,19 @@ void crossLine(int n, int state){
       }
     break;
     case 6:
-      switch(n){
+      switch(go){
         case 1:
-          back();
+          stop();
+          delay(300);
+          digitalWrite(S2, LOW);
+          d=1;
+          c -= 15;
+          delay(600);
+          straight();
+          c -= 10;
+          SL = 0;
+          SC = 1;
+          SR = 0;
           break;
         case 2:
           straight();
@@ -309,9 +351,15 @@ void crossLine(int n, int state){
       }
     break;
     case 7:
-      switch(n){
+      switch(go){
         case 1:
-          backLeft();
+          right();
+          c += 20;
+          delay(1100);
+          c -= 20;
+          SL = 0;
+          SC = 1;
+          SR = 1;
           break;
         case 2:
           straight();
@@ -325,26 +373,18 @@ void crossLine(int n, int state){
       }
     break;
     case 8:
-      switch(n){
-        case 1:
-          back();
-          break;
-        case 2:
-          straight();
-          break;
-        case 3:
-          stop();                   //시점 변경부분 실험하며 좀 더 자연스럽게 편집
-          break;
-        case 4:
-          straight();
-          break;
-      }
-    break;
-    case 9:
-      switch(n){
+      switch(go){
         case 1:
           stop();
-          delay(1000);
+          delay(500);
+          straight();
+          delay(1300);
+          stop();
+          digitalWrite(S1, LOW);
+          back();
+          delay(800);
+          stop();
+          delay(1000000000000000000000000);
           break;
         case 2:
           straight();
@@ -357,14 +397,9 @@ void crossLine(int n, int state){
           break;
       }
     break;
-    
-    default:
-      Serial.println("out of range");
-      stop();
-      delay(99999);
-      break;
   }
 }
+
 
 void setup() {
   Serial.begin(57600);
@@ -390,9 +425,8 @@ void setup() {
     
   //Relay initial setting(off)
   digitalWrite(S1, LOW);
-  digitalWrite(S2, LOW);
+  digitalWrite(S2, HIGH);
 
-  Serial.println("=========================================");
 }
 
 /*
@@ -414,12 +448,19 @@ void loop() {
         go = 1;
         break;
       case 'g':
+        digitalWrite(S1, HIGH);
+        digitalWrite(S2, HIGH);
+        c=130;
       //glass
-        go = 2;
+        go = 0;
         break;
       case 'p':
+      digitalWrite(S1, LOW);
+      digitalWrite(S2, LOW);
+      c = 80;
+      stop();
       //plastic
-        go = 3;
+        go = 0;
         break;
       case 'm':
       //metal
@@ -474,36 +515,26 @@ void loop() {
       if(d==1) clockWise();
       else counterClockWise();
     } 
-    //Pause --- 1 1 1
-    if( L == HIGH && C==HIGH && R == HIGH ){
+    //Pause --- 1 1 1, 1 0 1
+    if( L == HIGH && R == HIGH){
+      
+        if(L==SL && R==SR){
+          //crossLine(go,state);
+          Serial.println("same cross line");
+        }
+        else{
+          crossLine(go,++state);
+          Serial.println("another cross line");
+        }
+  
       print(d, state, L, C, R);
-      clockWise();
-      L, C, R = 0;
-      delay(1500);
-      if(d == 1){
-        L = digitalRead(HR);
-        C = digitalRead(HC);
-        R = digitalRead(HL);
-      }
-      else{
-        L = digitalRead(RR);
-        C = digitalRead(RC);
-        R = digitalRead(RL);
-      }
-      // if((L==SL)&&(C==SC)&&(R==SR))   {//same cross line
-      //   crossLine(go, state);
-      // }
-      // else{                           //new cross line
-      //   state += 1;
-      //   crossLine(go, state);  
-      // }
     }
-
     //print IR
     if (L != SL || C != SC || R != SR){
       print(d, state, L, C, R);
     }
     SL = L; SC = C; SR = R;
-   }
+
+  }
 
 }//end of loop
