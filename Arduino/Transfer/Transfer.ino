@@ -38,7 +38,7 @@ int c = 80;
 
 //motor control values for
 int SR=1, SC=1, SL=1;   //hold state
-int d=0;                //head or rear sensor
+int d=1;                //head or rear sensor
 int state=0;            //cross line processing
 int L, R, C;            //read IR sensor
 int go = 0;             //start or stop
@@ -79,10 +79,10 @@ void straight(){
 void left(){
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
-  analogWrite(ENA, c-25);
+  analogWrite(ENA, c-15);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  analogWrite(ENB, c-10);
+  analogWrite(ENB, c);
   digitalWrite(IN5, HIGH);
   digitalWrite(IN6, LOW);
   analogWrite(ENC, c+15);
@@ -100,10 +100,10 @@ void right(){
   analogWrite(ENB, c+30);     
   digitalWrite(IN5, LOW);
   digitalWrite(IN6, HIGH);
-  analogWrite(ENC, c-25);        //c-20
+  analogWrite(ENC, c-15);        //c-20
   digitalWrite(IN7, LOW);
   digitalWrite(IN8, HIGH);
-  analogWrite(END, c-10);        //c-5
+  analogWrite(END, c);        //c-5
 }
 
 void back(){
