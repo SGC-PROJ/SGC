@@ -7,6 +7,10 @@ const int IN2 = 29; // L298 Input 2 / pwm
 #define echo1 8
 #define trig2 7 //엔코더 모터쪽 초음파센서
 #define echo2 6
+// #define trig3 36 //앞쪽 사람 감지용 초음파 센서1
+// #define echo3 37
+// #define trig4 38 //앞쪽 사람 감지용 초음파 센서2
+// #define echo4 39
 int pos = 0;                                               // 모터 위치를 확인하기 위해 변수를 선언
 int servoPin = 4;  
 #define ENA 10
@@ -22,16 +26,52 @@ void setup() {
   pinMode(echo1, INPUT);
   pinMode(trig2, OUTPUT);
   pinMode(echo2, INPUT);
+  // pinMode(trig3, OUTPUT);
+  // pinMode(echo3, INPUT);
+  // pinMode(trig4, OUTPUT);
+  // pinMode(echo4, INPUT);
   pinMode (servoPin, OUTPUT);           // 모터 제어핀을 출력으로 설정
   myservo.attach(servoPin);                                // 모터의 신호선을 12번핀에 연결
 
   Serial.begin(57600);
 }
 
+void frontsensor1(){
+  digitalWrite(trig1, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig1, LOW);
+  int distance = pulseIn(echo1, HIGH) * 17 / 1000;
+  char discriminator = 'n';
+  if(distance<25){
+    discriminator = 'y';
+    Serial.println(discriminator);
+  }
+  
+  delay(500);
+}
+void frontsensor2(){
+  digitalWrite(trig2, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig2, LOW);
+  int distance = pulseIn(echo2, HIGH) * 17 / 1000;
+  char discriminator = 'n';
+  if(distance<25){
+    discriminator = 'y';
+  }
+  Serial.println(discriminator);
+  delay(500);
+}
 void loop() {
+  
+  
   if(Serial.available()){
     char cmd = Serial.read();
     myservo.write(95);
+
+    if (cmd == 'b'){
+      frontsensor1();
+      frontsensor2();
+    }
 
     if (cmd == 'a'){  // 랙앤피니언 모터 테스트(default 반대 방향)
       digitalWrite(IN2, HIGH);
