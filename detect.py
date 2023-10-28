@@ -37,8 +37,8 @@ import sys
 from pathlib import Path
 import cv2
 import numpy as np
-
 import torch
+
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -72,8 +72,9 @@ from utils.general import (
 )
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
+#from recycle import recycle
+from sound import sound
 
-from recycle import recycle
 os.environ['DISPLAY'] = ':0'
 @smart_inference_mode()
 def run(
@@ -175,6 +176,8 @@ def run(
 
         # Process predictions
         for i, det in enumerate(pred):  # per image
+            
+
             seen += 1
             if webcam:  # batch_size >= 1
                 p, im0, frame = path[i], im0s[i].copy(), dataset.count
@@ -205,7 +208,7 @@ def run(
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
                     # print(names[int(c)])
-                    recycle(int(c))
+                    #recycle(int(c))
                     
 
                 # Write results
@@ -250,6 +253,7 @@ def run(
                     )  # allow window resize (Linux)
                     cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
                 
+                
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond
 
@@ -280,7 +284,7 @@ def run(
         LOGGER.info(
             f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms"
         )
-        
+        sound()
         
 
     # Print results
@@ -289,6 +293,7 @@ def run(
         f"Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}"
         % t
     )
+    
     if save_txt or save_img:
         s = (
             f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}"
