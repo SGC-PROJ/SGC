@@ -39,6 +39,7 @@ import cv2
 import numpy as np
 import torch
 
+import socket
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLOv5 root directory
@@ -72,10 +73,13 @@ from utils.general import (
 )
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
-#from recycle import recycle
+from recycle import recycle
+
 from sound import sound
 
-os.environ['DISPLAY'] = ':0'
+os.environ["DISPLAY"] = ":0"
+
+
 @smart_inference_mode()
 def run(
     weights=ROOT / "yolov5s.pt",  # model path or triton URL
@@ -106,6 +110,16 @@ def run(
     dnn=False,  # use OpenCV DNN for ONNX inference
     vid_stride=1,  # video frame-rate stride
 ):
+    server_ip = "192.168.239.42"
+    server_port = 12345
+
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind((server_ip, server_port))
+    server_socket.listen(1)
+    print("wait for client...")
+    client_socket, client_address = server_socket.accept()
+    print("connected client :", client_address)
+
     source = str(source)
     save_img = not nosave and not source.endswith(".txt")  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
@@ -164,7 +178,7 @@ def run(
                 else False
             )
             pred = model(im, augment=augment, visualize=visualize)
-        
+
         # NMS
         with dt[2]:
             pred = non_max_suppression(
@@ -176,6 +190,8 @@ def run(
 
         # Process predictions
         for i, det in enumerate(pred):  # per image
+            sound()
+
             seen += 1
             if webcam:  # batch_size >= 1
                 p, im0, frame = path[i], im0s[i].copy(), dataset.count
@@ -194,7 +210,7 @@ def run(
             im0 = np.ascontiguousarray(im0)
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
-            
+
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
@@ -203,9 +219,9 @@ def run(
                 for c in det[:, 5].unique():
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
-                    # print(names[int(c)])
-                    #recycle(int(c))
-                    
+                    print(names[int(c)])
+                    recycle(int(c), client_socket)
+                    # recycle(int(c))
 
                 # Write results
                 for *xyxy, conf, cls in reversed(det):
@@ -248,8 +264,7 @@ def run(
                         str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO
                     )  # allow window resize (Linux)
                     cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
-                
-                
+
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond
 
@@ -280,8 +295,6 @@ def run(
         LOGGER.info(
             f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms"
         )
-        sound()
-        
 
     # Print results
     t = tuple(x.t / seen * 1e3 for x in dt)  # speeds per image
@@ -289,7 +302,7 @@ def run(
         f"Speed: %.1fms pre-process, %.1fms inference, %.1fms NMS per image at shape {(1, 3, *imgsz)}"
         % t
     )
-    
+
     if save_txt or save_img:
         s = (
             f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}"
